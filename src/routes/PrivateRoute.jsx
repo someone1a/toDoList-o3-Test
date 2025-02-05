@@ -1,38 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
 import { supabase } from '../supabase/supabaseClient';
 
-const PrivateRoute = ({ children }) => {
+const PrivateRoute = () => {
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Función para obtener la sesión actual
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
+    // Función para obtener el usuario actual
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
       setLoading(false);
     };
 
-    getSession();
+    getUser();
 
-    // Suscribirse a los cambios en el estado de autenticación
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-    });
+    // Suscribirse a los cambios de autenticación
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user || null);
+      }
+    );
 
-    // Limpiar la suscripción al desmontar el componente
+    // Cleanup: cancelar la suscripción al desmontar el componente
     return () => {
-      authListener.subscription.unsubscribe();
+      if (subscription && typeof subscription.unsubscribe === 'function') {
+        subscription.unsubscribe();
+      }
     };
   }, []);
 
-  if (loading) {
-    return <div>Cargando...</div>;
-  }
+  if (loading) return <div>Loading...</div>;
 
-  // Si está autenticado se renderiza el contenido, sino se redirige a la página principal
-  return isAuthenticated ? children : <Navigate to="/" />;
+  // Si hay usuario, renderiza las rutas hijas; de lo contrario, redirige a /login
+  return user ? <Outlet /> : <Navigate to="/login" />;
 };
 
 export default PrivateRoute;

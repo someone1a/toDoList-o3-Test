@@ -8,12 +8,17 @@ import PrivateRoute from './routes/PrivateRoute';
 const App = () => {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/tasks" element={<PrivateRoute><TaskList /></PrivateRoute>} />
-        {/* Agrega más rutas según sea necesario */}
-      </Routes>
-    </Router>
+  <Routes>
+    <Route path="/" element={<LandingPage />} />
+    <Route path="/tasks" element={
+      <PrivateRoute>
+        <TaskList />
+      </PrivateRoute>
+    } />
+    {/* Agrega más rutas según sea necesario */}
+  </Routes>
+</Router>
+
   );
 };
 
